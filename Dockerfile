@@ -24,4 +24,5 @@ RUN python manage.py collectstatic --noinput
 
 EXPOSE 10000
 
-CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py seed_initial_data && gunicorn transformodocs.wsgi:application --bind 0.0.0.0:${PORT:-10000}"]
+CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py seed_initial_data && python manage.py bootstrap_admin && gunicorn transformodocs.wsgi:application --bind 0.0.0.0:${PORT:-10000}"]
+
