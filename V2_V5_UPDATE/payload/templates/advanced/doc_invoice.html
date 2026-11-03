@@ -1,0 +1,32 @@
+<html><head><meta charset="utf-8"><style>
+body { font-family: sans-serif; font-size: 10.5pt; color: #1f2a44; }
+h1 { font-size: 20pt; margin: 0; color: #1f2a44; }
+.muted { color: #5b6b8c; font-size: 9.5pt; }
+.title { font-size: 14pt; font-weight: bold; color: #2563eb; margin-top: 14pt; }
+table { width: 100%; border-collapse: collapse; margin-top: 10pt; }
+th { background-color: #e8efff; text-align: left; padding: 4pt; font-size: 9.5pt; border: 1px solid #c7d4f0; }
+td { padding: 4pt; border: 1px solid #dbe3f3; font-size: 10pt; }
+.right { text-align: right; }
+.total { font-size: 13pt; font-weight: bold; margin-top: 6pt; }
+</style></head><body>
+<h1>{{ seller_name }}</h1>
+{% if seller_address %}<p class="muted">{{ seller_address }}</p>{% endif %}
+{% if seller_gstin %}<p class="muted">GSTIN: {{ seller_gstin }}</p>{% endif %}
+<p class="title">TAX INVOICE</p>
+<p>Invoice No: {{ invoice_number }}</p>
+<p>Invoice Date: {{ invoice_date_text }}</p>
+{% if due_date_text %}<p>Due Date: {{ due_date_text }}</p>{% endif %}
+<p><b>Bill To:</b></p>
+<p>{{ customer_name }}</p>
+{% if customer_address %}<p class="muted">{{ customer_address }}</p>{% endif %}
+<table>
+<tr><th>#</th><th>Description</th><th class="right">Qty</th><th class="right">Unit price</th><th class="right">Amount</th></tr>
+{% for r in rows %}<tr><td>{{ r.n }}</td><td>{{ r.description }}</td><td class="right">{{ r.qty }}</td><td class="right">{{ r.price }}</td><td class="right">{{ r.amount }}</td></tr>{% endfor %}
+</table>
+<p>&nbsp;</p>
+<p>Subtotal: {{ subtotal_text }}</p>
+<p>GST ({{ gst_rate }}%): {{ tax_text }}</p>
+<p class="total">Total Amount: {{ total_text }}</p>
+<p class="muted">{{ words }}</p>
+{% if notes %}<p class="muted">Notes: {{ notes }}</p>{% endif %}
+</body></html>

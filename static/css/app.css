@@ -1,0 +1,25 @@
+body { background: #f6f7f9; }
+.navbar-brand { font-weight: 700; letter-spacing: .3px; }
+.card { border: 0; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.stat-card .display-6 { font-weight: 700; }
+.dropzone { border: 2px dashed #9aa5b1; border-radius: .75rem; padding: 2.5rem 1rem; text-align: center;
+  background: #fff; cursor: pointer; transition: all .15s; }
+.dropzone.dragover { border-color: #0d6efd; background: #eef4ff; }
+.step { padding: .35rem 0; color: #6c757d; }
+.step.active { color: #0d6efd; font-weight: 600; }
+.step.done { color: #198754; }
+.step.failed { color: #dc3545; font-weight: 600; }
+.step .dot { display: inline-block; width: 1.4rem; }
+.field-low { background: #fff8e1; }
+.field-missing { background: #fdecea; }
+.preview-pane { max-height: 80vh; overflow-y: auto; background: #e9ecef; padding: .5rem; border-radius: .5rem; }
+.preview-pane img { width: 100%; margin-bottom: .5rem; border: 1px solid #ccd; background: #fff; }
+pre.text-pane { white-space: pre-wrap; max-height: 70vh; overflow: auto; background: #fff; padding: 1rem;
+  border: 1px solid #dee2e6; border-radius: .5rem; font-size: .85rem; }
+pre.json-pane { max-height: 50vh; overflow: auto; background: #1e2430; color: #d6e2f0; padding: 1rem;
+  border-radius: .5rem; font-size: .8rem; }
+mark { padding: 0 .1em; }
+.layout-block { border-left: 3px solid #ced4da; padding: .25rem .75rem; margin-bottom: .4rem; background: #fff; }
+.layout-block.heading { border-left-color: #0d6efd; font-weight: 600; }
+.layout-block.kv { border-left-color: #198754; }
+.layout-block.table { border-left-color: #fd7e14; }

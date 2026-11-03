@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load core_extras %}
+{% block title %}{{ doc.display_name }}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-start mb-3">
+  <div>
+    <h4 class="mb-1">{{ doc.display_name }}</h4>
+    <span class="badge bg-{{ doc.status|status_color }} fs-6">{{ doc.get_status_display }}</span>
+    {% if doc.verification_method == 'AUTO' %}<span class="badge bg-success">Auto-verified</span>{% elif doc.verification_method == 'MANUAL' %}<span class="badge bg-success">Verified by {{ doc.verified_by.get_username|default:"reviewer" }}</span>{% endif %}
+    <span class="text-muted small ms-2">{{ doc.doc_type.name|default:"Type not recognised" }} &middot; owner {{ doc.owner.get_username }}</span>
+  </div>
+  <div class="d-flex gap-2">
+    {% if doc.status == 'FAILED' and can_modify %}<form method="post" action="{% url 'document_retry' doc.pk %}">{% csrf_token %}<button class="btn btn-warning btn-sm">Retry</button></form>{% endif %}
+    {% if can_archive and can_modify %}<form method="post" action="{% url 'document_archive' doc.pk %}" onsubmit="return confirm('Archive this document?');">{% csrf_token %}<button class="btn btn-outline-secondary btn-sm">Archive</button></form>{% endif %}
+  </div>
+</div>
+
+{% if doc.status == 'FAILED' %}<div class="alert alert-danger">{{ doc.status_detail }}{% if doc.error_ref %} <span class="text-muted">(ref #{{ doc.error_ref }})</span>{% endif %}</div>{% endif %}
+{% if doc.status == 'REJECTED' %}<div class="alert alert-danger"><strong>Rejected by a reviewer:</strong> {{ doc.status_detail }}<br><span class="small">You can upload a corrected file from the Upload page.</span></div>{% endif %}
+{% if doc.status == 'PENDING_VERIFICATION' %}
+<div class="alert alert-warning"><strong>Under review.</strong> The data below is not verified yet.
+  {% if reasons %}<ul class="mb-0 mt-1">{% for r in reasons %}<li>{{ r }}</li>{% endfor %}</ul>{% endif %}</div>
+{% endif %}
+{% if doc.status == 'BLOCKED' %}<div class="alert alert-dark">{{ doc.status_detail|default:"This document was blocked because it is not machine-readable." }}</div>{% endif %}
+
+<ul class="nav nav-tabs mb-3" role="tablist">
+  <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#t-data">Extracted data</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-text">Full text</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-layout">Layout</button></li>
+  {% if has_preview %}<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-preview">Preview</button></li>{% endif %}
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-down">Downloads</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#t-info">Details</button></li>
+  {% if v2_enabled %}{% include "intelligence/tab_nav.html" %}{% endif %}
+</ul>
+
+<div class="tab-content">
+  <div class="tab-pane fade show active" id="t-data">
+    {% if rows %}
+    <div class="card"><div class="table-responsive"><table class="table align-middle mb-0">
+      <thead><tr><th>Field</th><th>Value</th><th class="text-end">Confidence</th></tr></thead><tbody>
+      {% for r in rows %}
+      <tr class="{% if r.missing and r.required %}field-missing{% elif r.low %}field-low{% endif %}">
+        <td>{{ r.label }}{% if r.required %} <span class="text-danger">*</span>{% endif %}</td>
+        <td style="white-space: pre-line">{% if r.missing %}<span class="text-muted">{% if r.required %}missing{% else %}not found{% endif %}</span>{% else %}{{ r.display }}{% endif %}</td>
+        <td class="text-end">{% if r.conf is not None %}<span class="badge bg-{{ r.conf|conf_color }}">{{ r.conf|num1 }}</span>{% endif %}</td>
+      </tr>{% endfor %}
+      </tbody></table></div></div>
+    <div class="form-text mt-1">* required field. Highlighted rows have low confidence or are missing.</div>
+    {% else %}<div class="alert alert-secondary">No structured fields: the document type is not recognised yet.</div>{% endif %}
+  </div>
+
+  <div class="tab-pane fade" id="t-text"><pre class="text-pane">{{ v.extracted_text|default:"(no text)" }}</pre></div>
+
+  <div class="tab-pane fade" id="t-layout">
+    {% for p in pages %}
+      <h6 class="mt-2">Page {{ p.page }} <span class="badge bg-light text-dark border">{{ p.method }}</span></h6>
+      {% for b in p.blocks %}<div class="layout-block {{ b.type }}"><span class="badge bg-light text-dark border me-2">{{ b.type }}{% if b.level %} {{ b.level }}{% endif %}</span><span style="white-space: pre-line">{{ b.text }}</span></div>{% endfor %}
+    {% empty %}<div class="text-muted">No layout data.</div>{% endfor %}
+  </div>
+
+  {% if has_preview %}
+  <div class="tab-pane fade" id="t-preview"><div class="preview-pane">
+    {% for n in page_numbers %}<img loading="lazy" src="{% url 'document_page_image' doc.pk n %}" alt="Page {{ n }}">{% endfor %}
+  </div></div>
+  {% endif %}
+
+  <div class="tab-pane fade" id="t-down">
+    <div class="d-flex flex-wrap gap-2 mb-3">
+      {% for f in formats %}<a class="btn btn-outline-primary btn-sm" href="{% url 'document_download' doc.pk f %}">Download {{ f|upper }}</a>{% endfor %}
+      <a class="btn btn-outline-secondary btn-sm" href="{% url 'document_file' doc.pk %}">Original file</a>
+    </div>
+    <div class="small text-muted mb-1">JSON preview</div><pre class="json-pane">{{ json_preview }}</pre>
+  </div>
+
+  <div class="tab-pane fade" id="t-info">
+    <div class="card"><table class="table table-sm mb-0"><tbody>
+      <tr><th style="width:35%">Original machine-readable</th><td>{% if v.is_machine_readable is None %}-{% elif v.is_machine_readable %}Yes{% else %}No{% endif %}</td></tr>
+      <tr><th>Extraction method</th><td>{{ v.get_detection_method_display|default:"-" }}</td></tr>
+      <tr><th>Pages</th><td>{{ v.page_count }}</td></tr>
+      <tr><th>Overall confidence</th><td>{% if v.overall_confidence is not None %}{{ v.overall_confidence|num1 }} / 100 (auto-verify needs {{ threshold|floatformat:0 }}){% else %}-{% endif %}</td></tr>
+      <tr><th>Classification confidence</th><td>{{ v.classification_confidence|pct }}</td></tr>
+      <tr><th>Processing time</th><td>{% if v.processing_seconds is not None %}{{ v.processing_seconds }} s{% else %}-{% endif %}</td></tr>
+      <tr><th>File size</th><td>{{ v.file_size|filesizeformat }}</td></tr>
+      <tr><th>Uploaded</th><td>{{ doc.created_at|date:"d M Y H:i" }}</td></tr>
+      <tr><th>Version</th><td>{{ v.version_number }}</td></tr>
+      {% if ocr_profile %}<tr><th>OCR language</th><td>{{ ocr_profile.language_label }}</td></tr>
+      <tr><th>Handwritten mode</th><td>{% if ocr_profile.handwriting %}Yes{% else %}No{% endif %}</td></tr>{% endif %}
+      {% if v.language %}<tr><th>Detected language</th><td>{{ v.language }}</td></tr>{% endif %}
+    </tbody></table></div>
+  </div>
+  {% if v2_enabled %}{% include "intelligence/tab_panes.html" %}{% endif %}
+</div>
+{% if v2_enabled %}{% include "intelligence/chat_panel.html" %}{% endif %}
+{% endblock %}
+{% block scripts %}{% if v2_enabled %}{% load static %}<script src="{% static 'js/chat.js' %}"></script><script src="{% static 'js/insights.js' %}"></script>{% endif %}{% endblock %}

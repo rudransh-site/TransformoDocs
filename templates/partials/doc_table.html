@@ -1,0 +1,17 @@
+{% load core_extras %}
+<div class="table-responsive"><table class="table table-sm table-hover align-middle mb-0">
+  <thead><tr><th>File</th><th>Type</th>{% if show_owner %}<th>Owner</th>{% endif %}<th>Status</th><th>Confidence</th><th>Uploaded</th></tr></thead>
+  <tbody>
+  {% for d in docs %}
+    <tr>
+      <td><a href="{% url 'document_detail' d.pk %}">{{ d.display_name }}</a></td>
+      <td>{{ d.doc_type.name|default:"-" }}</td>
+      {% if show_owner %}<td>{{ d.owner.get_username }}</td>{% endif %}
+      <td><span class="badge bg-{{ d.status|status_color }}">{{ d.get_status_display }}</span></td>
+      <td>{% if d.current_version.overall_confidence is not None %}<span class="badge bg-{{ d.current_version.overall_confidence|conf_color }}">{{ d.current_version.overall_confidence|num1 }}</span>{% else %}-{% endif %}</td>
+      <td class="text-muted small">{{ d.created_at|date:"d M Y H:i" }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="6" class="text-center text-muted py-4">No documents yet.</td></tr>
+  {% endfor %}
+  </tbody></table></div>

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Users{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3"><h4 class="mb-0">Users and roles</h4><a class="btn btn-primary btn-sm" href="{% url 'manage_user_new' %}">Create account</a></div>
+<div class="card"><div class="table-responsive"><table class="table align-middle mb-0">
+  <thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th></th></tr></thead><tbody>
+  {% for u in users %}
+  <tr>
+    <td>{{ u.username }}{% if u.pk == user.pk %} <span class="badge bg-light text-dark border">you</span>{% endif %}</td>
+    <td class="small">{{ u.email }}</td>
+    <td>
+      {% if u.pk == user.pk %}<span class="badge bg-secondary">{{ u.profile.role }}</span>{% else %}
+      <form method="post" action="{% url 'manage_user_role' u.pk %}" class="d-flex gap-1">{% csrf_token %}
+        <select name="role" class="form-select form-select-sm" style="width:9rem">{% for v, l in roles %}<option value="{{ v }}" {% if v == u.profile.role %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+        <button class="btn btn-outline-primary btn-sm">Set</button></form>{% endif %}
+    </td>
+    <td>{% if u.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-secondary">Deactivated</span>{% endif %}</td>
+    <td class="small text-muted">{{ u.date_joined|date:"d M Y" }}</td>
+    <td class="text-end">{% if u.pk != user.pk %}<form method="post" action="{% url 'manage_user_toggle' u.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-{% if u.is_active %}danger{% else %}success{% endif %}">{% if u.is_active %}Deactivate{% else %}Reactivate{% endif %}</button></form>{% endif %}</td>
+  </tr>{% endfor %}
+</tbody></table></div></div>
+{% endblock %}

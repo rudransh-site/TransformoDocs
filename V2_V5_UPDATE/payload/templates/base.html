@@ -1,0 +1,55 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ app_name }}{% endblock %} - {{ app_name }}</title>
+  <link href="{% static 'vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'css/app.css' %}" rel="stylesheet">
+  <link href="{% static 'css/v2v5.css' %}" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container">
+    <a class="navbar-brand" href="{% url 'home' %}">{{ app_name }}</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="nav">
+      {% if user.is_authenticated %}
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a></li>
+        {% if is_plain_user or is_admin %}<li class="nav-item"><a class="nav-link" href="{% url 'upload' %}">Upload</a></li>{% endif %}
+        <li class="nav-item"><a class="nav-link" href="{% url 'document_list' %}">Documents</a></li>
+        {% if v5_enabled and role != 'REVIEWER' %}<li class="nav-item"><a class="nav-link" href="{% url 'generator' %}">Generate</a></li>{% endif %}
+        <li class="nav-item"><a class="nav-link" href="{% url 'search' %}">Search</a></li>
+        {% if is_reviewer or is_admin %}
+        <li class="nav-item"><a class="nav-link" href="{% url 'review_queue' %}">Review queue{% if pending_reviews %} <span class="badge bg-warning text-dark">{{ pending_reviews }}</span>{% endif %}</a></li>
+        {% endif %}
+        {% if is_admin %}
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Admin{% if unread_alerts %} <span class="badge bg-danger">{{ unread_alerts }}</span>{% endif %}</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{% url 'manage_users' %}">Users and roles</a></li>
+            <li><a class="dropdown-item" href="{% url 'manage_audit' %}">Audit log</a></li>
+            <li><a class="dropdown-item" href="{% url 'manage_stats' %}">System stats</a></li>
+            <li><a class="dropdown-item" href="{% url 'manage_health' %}">Health and alerts</a></li>
+            <li><a class="dropdown-item" href="{% url 'manage_settings' %}">Settings</a></li>
+          </ul>
+        </li>
+        {% endif %}
+      </ul>
+      <span class="navbar-text me-3">{{ user.get_username }} <span class="badge bg-secondary">{{ role }}</span></span>
+      <form method="post" action="{% url 'logout' %}" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-light">Log out</button></form>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+<main class="container py-4">
+  {% for m in messages %}
+  <div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags|default:'info' }}{% endif %} alert-dismissible fade show">{{ m }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+  {% endfor %}
+  {% block content %}{% endblock %}
+</main>
+<script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

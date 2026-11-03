@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load core_extras %}
+{% block title %}Review{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div><h4 class="mb-0">Review: {{ v.original_filename }}</h4>
+    <span class="text-muted small">Owner {{ doc.owner.get_username }} &middot; confidence {{ v.overall_confidence|num1 }}{% if not can_edit %} &middot; <strong>read-only</strong>{% endif %}</span></div>
+  <a class="btn btn-outline-secondary btn-sm" href="{% url 'review_queue' %}">Back to queue</a>
+</div>
+{% if reasons %}<div class="alert alert-warning py-2"><strong>Why this needs review:</strong><ul class="mb-0">{% for r in reasons %}<li>{{ r }}</li>{% endfor %}</ul></div>{% endif %}
+{% if general_error %}<div class="alert alert-danger">{{ general_error }}</div>{% endif %}
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="preview-pane">
+      {% if has_preview %}{% for n in page_numbers %}<img src="{% url 'document_page_image' doc.pk n %}" alt="Page {{ n }}">{% endfor %}
+      {% else %}<pre class="text-pane mb-0">{{ v.extracted_text }}</pre>{% endif %}
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card mb-3"><div class="card-body">
+      <form method="post" class="row g-2 align-items-end">{% csrf_token %}
+        <input type="hidden" name="action" value="change_type">
+        <div class="col"><label class="form-label small mb-1">Document type</label>
+          <select name="doc_type" class="form-select form-select-sm" {% if not can_edit %}disabled{% endif %}>
+            {% if not doc.doc_type %}<option value="">Choose a type...</option>{% endif %}
+            {% for t in types %}<option value="{{ t.pk }}" {% if t.pk == doc.doc_type_id %}selected{% endif %}>{{ t.name }}</option>{% endfor %}
+          </select></div>
+        <div class="col-auto"><button class="btn btn-outline-primary btn-sm" {% if not can_edit %}disabled{% endif %}>Apply and re-extract</button></div>
+      </form>
+    </div></div>
+
+    <form method="post">{% csrf_token %}
+      <div class="card mb-3"><div class="card-header">Extracted fields</div>
+      <div class="card-body">
+        {% if not rows %}<div class="text-muted">Choose a document type above to get the fields for it.</div>{% endif %}
+        {% for r in rows %}
+        <div class="mb-3 p-2 rounded {% if r.missing and r.required %}field-missing{% elif r.low %}field-low{% endif %}">
+          <label class="form-label small mb-1">{{ r.label }}{% if r.required %} <span class="text-danger">*</span>{% endif %}
+            {% if r.conf is not None %}<span class="badge bg-{{ r.conf|conf_color }} ms-1">{{ r.conf|num1 }}</span>{% endif %}
+            <span class="text-muted">({{ r.type }})</span></label>
+          {% if r.type == 'text' or r.type == 'list' %}
+          <textarea name="f_{{ r.key }}" rows="3" class="form-control form-control-sm {% if r.error %}is-invalid{% endif %}" {% if not can_edit %}readonly{% endif %}>{{ r.display }}</textarea>
+          {% else %}
+          <input name="f_{{ r.key }}" value="{{ r.display }}" class="form-control form-control-sm {% if r.error %}is-invalid{% endif %}" {% if not can_edit %}readonly{% endif %}>
+          {% endif %}
+          {% if r.error %}<div class="invalid-feedback d-block">{{ r.error }}</div>{% endif %}
+        </div>
+        {% endfor %}
+      </div></div>
+      <div class="mb-3"><label class="form-label small">Comment (required to reject)</label>
+        <textarea name="comment" rows="2" class="form-control form-control-sm" {% if not can_edit %}readonly{% endif %}>{{ comment }}</textarea></div>
+      {% if can_edit %}
+      <div class="d-flex gap-2">
+        <button name="action" value="approve" class="btn btn-success">Approve</button>
+        <button name="action" value="reject" class="btn btn-outline-danger" onclick="return confirm('Reject this document?');">Reject</button>
+      </div>
+      {% endif %}
+    </form>
+  </div>
+</div>
+{% endblock %}

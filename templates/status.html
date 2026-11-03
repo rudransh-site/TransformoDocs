@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Processing{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-7">
+  <div class="card"><div class="card-body p-4">
+    <h5 class="mb-1">Processing {{ doc.display_name }}</h5>
+    <p class="text-muted small mb-3">Please keep this page open. It will open the result automatically.</p>
+    <div class="progress mb-2" style="height: 1.5rem;"><div id="bar" class="progress-bar progress-bar-striped progress-bar-animated" style="width: {{ doc.progress_percent }}%">{{ doc.progress_percent }}%</div></div>
+    <div id="msg" class="fw-semibold mb-3">{{ doc.progress_message|default:"Starting..." }}</div>
+    <div id="steps"></div>
+    <div id="warn" class="alert alert-warning d-none mt-3">This is taking longer than expected. If nothing changes, ask an administrator to recover stuck documents, then retry.</div>
+    <noscript>
+      <hr><p class="small">JavaScript is off.</p>
+      <form method="post" action="{% url 'api_process' doc.pk %}">{% csrf_token %}<button class="btn btn-primary btn-sm">Process now</button></form>
+    </noscript>
+  </div></div>
+</div></div>
+<script id="status-config" type="application/json">{"statusUrl": "{% url 'api_status' doc.pk %}", "processUrl": "{% url 'api_process' doc.pk %}", "canProcess": {% if can_process %}true{% else %}false{% endif %}, "csrf": "{{ csrf_token }}", "loginUrl": "{% url 'login' %}"}</script>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/status.js' %}"></script>{% endblock %}

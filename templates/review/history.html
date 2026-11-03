@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}My reviews{% endblock %}
+{% block content %}
+<h4 class="mb-3">My review history</h4>
+<div class="card"><table class="table mb-0"><thead><tr><th>Document</th><th>Decision</th><th>Comment</th><th>When</th></tr></thead><tbody>
+{% for t in page %}<tr><td><a href="{% url 'document_detail' t.version.document.pk %}">{{ t.version.original_filename }}</a></td>
+<td><span class="badge bg-{% if t.decision == 'REJECTED' %}danger{% else %}success{% endif %}">{{ t.get_decision_display }}</span></td>
+<td class="small">{{ t.comment|default:"-" }}</td><td class="small text-muted">{{ t.decided_at|date:"d M Y H:i" }}</td></tr>
+{% empty %}<tr><td colspan="4" class="text-center text-muted py-4">No reviews yet.</td></tr>{% endfor %}
+</tbody></table></div>
+<div class="mt-3">{% include "partials/pagination.html" %}</div>
+{% endblock %}

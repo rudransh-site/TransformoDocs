@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Document generator{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+  <div><h4 class="mb-0">Document generator</h4>
+    <div class="text-muted small">Fill a template, preview it live, then download it or save it into TransformoDocs.</div></div>
+  {% if template %}<a class="btn btn-outline-secondary btn-sm" href="{% url 'generator' %}">Change template</a>{% endif %}
+</div>
+
+{% if not template %}
+<div class="row g-3 mb-4">
+  {% for key, t in templates.items %}
+  <div class="col-md-6 col-lg-4"><a class="text-decoration-none" href="{% url 'generator' %}?template={{ key }}">
+    <div class="card template-card h-100"><div class="card-body"><h5 class="mb-1 text-dark">{{ t.label }}</h5><div class="text-muted small">{{ t.blurb }}</div>
+    <div class="mt-3 small text-primary">Start &rarr;</div></div></div></a></div>
+  {% endfor %}
+</div>
+<h6>Recently generated</h6>
+<div class="card"><ul class="list-group list-group-flush">
+  {% for g in history %}<li class="list-group-item d-flex justify-content-between align-items-center">
+    <span>{{ g.title }} <span class="text-muted small">&middot; {{ g.created_at|date:"d M H:i" }}</span></span>
+    <span>{% if g.saved_document_id %}<a class="btn btn-sm btn-link" href="{% url 'document_detail' g.saved_document_id %}">Open saved</a>{% endif %}
+    <a class="btn btn-sm btn-outline-primary" href="{% url 'generator' %}?template={{ g.template }}&from={{ g.pk }}">Use again</a></span></li>
+  {% empty %}<li class="list-group-item text-muted">Nothing generated yet.</li>{% endfor %}
+</ul></div>
+
+{% else %}
+<form id="gen-form" method="post" data-preview="{% url 'generator_preview' %}" data-prefill="/generator/prefill/0/">
+  {% csrf_token %}
+  <input type="hidden" name="template" value="{{ template }}">
+  <div class="row g-3">
+    <div class="col-lg-5">
+      <div class="card"><div class="card-body">
+        {% if sources %}
+        <div class="mb-3"><label class="form-label small fw-semibold" for="prefill-select">Smart autofill from one of your documents</label>
+          <select id="prefill-select" class="form-select form-select-sm"><option value="">Choose a document...</option>
+            {% for d in sources %}<option value="{{ d.pk }}">{{ d.display_name }} ({{ d.doc_type.name }})</option>{% endfor %}</select></div>
+        {% endif %}
+
+        {% if template == 'invoice' %}
+        <div class="row g-2">
+          <div class="col-12"><label class="form-label small">Seller name *</label><input class="form-control form-control-sm" name="seller_name" value="{{ form.seller_name }}"><div class="field-error" data-for="seller_name"></div></div>
+          <div class="col-12"><label class="form-label small">Seller address</label><input class="form-control form-control-sm" name="seller_address" value="{{ form.seller_address }}"></div>
+          <div class="col-md-6"><label class="form-label small">GSTIN (optional)</label><input class="form-control form-control-sm" name="seller_gstin" value="{{ form.seller_gstin }}" maxlength="15"><div class="field-error" data-for="seller_gstin"></div></div>
+          <div class="col-md-6"><label class="form-label small">Invoice number *</label><input class="form-control form-control-sm" name="invoice_number" value="{{ form.invoice_number }}"><div class="field-error" data-for="invoice_number"></div></div>
+          <div class="col-md-6"><label class="form-label small">Invoice date *</label><input type="date" class="form-control form-control-sm" name="invoice_date" value="{{ form.invoice_date }}"><div class="field-error" data-for="invoice_date"></div></div>
+          <div class="col-md-6"><label class="form-label small">Due date</label><input type="date" class="form-control form-control-sm" name="due_date" value="{{ form.due_date|default:'' }}"><div class="field-error" data-for="due_date"></div></div>
+          <div class="col-12"><label class="form-label small">Customer name *</label><input class="form-control form-control-sm" name="customer_name" value="{{ form.customer_name }}"><div class="field-error" data-for="customer_name"></div></div>
+          <div class="col-12"><label class="form-label small">Customer address</label><input class="form-control form-control-sm" name="customer_address" value="{{ form.customer_address }}"></div>
+          <div class="col-12"><label class="form-label small fw-semibold mt-2">Items *</label>
+            <div id="items">
+              {% for it in form.items %}
+              <div class="row g-1 mb-1 item-row">
+                <div class="col-6"><input class="form-control form-control-sm" name="item_desc" placeholder="Description" value="{{ it.description }}"></div>
+                <div class="col-2"><input class="form-control form-control-sm" name="item_qty" placeholder="Qty" value="{{ it.qty }}" inputmode="decimal"></div>
+                <div class="col-3"><input class="form-control form-control-sm" name="item_price" placeholder="Price" value="{{ it.unit_price }}" inputmode="decimal"></div>
+                <div class="col-1"><button type="button" class="btn btn-outline-danger btn-sm item-del" aria-label="Remove item">&times;</button></div>
+              </div>{% endfor %}
+            </div>
+            <button type="button" id="add-item" class="btn btn-outline-primary btn-sm mt-1">+ Add item</button>
+            <div class="field-error" data-for="items"></div></div>
+          <div class="col-md-4"><label class="form-label small">GST %</label><input class="form-control form-control-sm" name="gst_rate" value="{{ form.gst_rate }}" inputmode="decimal"><div class="field-error" data-for="gst_rate"></div></div>
+          <div class="col-md-8"><label class="form-label small">Notes</label><input class="form-control form-control-sm" name="notes" value="{{ form.notes }}"></div>
+        </div>
+        <div id="totals" class="small text-muted mt-3"></div>
+        {% else %}
+        <div class="row g-2">
+          <div class="col-md-6"><label class="form-label small">Certificate type</label><select class="form-select form-select-sm" name="title_type">{% for c in cert_types %}<option {% if c == form.title_type %}selected{% endif %}>{{ c }}</option>{% endfor %}</select></div>
+          <div class="col-md-6"><label class="form-label small">Issue date *</label><input type="date" class="form-control form-control-sm" name="issue_date" value="{{ form.issue_date }}"><div class="field-error" data-for="issue_date"></div></div>
+          <div class="col-12"><label class="form-label small">Recipient name *</label><input class="form-control form-control-sm" name="recipient_name" value="{{ form.recipient_name }}"><div class="field-error" data-for="recipient_name"></div></div>
+          <div class="col-12"><label class="form-label small">Course / achievement *</label><input class="form-control form-control-sm" name="course" value="{{ form.course }}"><div class="field-error" data-for="course"></div></div>
+          <div class="col-12"><label class="form-label small">Issuing organization *</label><input class="form-control form-control-sm" name="organization" value="{{ form.organization }}"><div class="field-error" data-for="organization"></div></div>
+          <div class="col-md-6"><label class="form-label small">Certificate ID *</label><input class="form-control form-control-sm" name="certificate_id" value="{{ form.certificate_id }}"><div class="field-error" data-for="certificate_id"></div></div>
+          <div class="col-md-6"><label class="form-label small">Signatory (optional)</label><input class="form-control form-control-sm" name="signatory" value="{{ form.signatory }}"></div>
+        </div>
+        {% endif %}
+
+        <div class="d-flex flex-wrap gap-2 mt-4">
+          <button class="btn btn-primary btn-sm" formaction="{% url 'generator_export' 'pdf' %}">Download PDF</button>
+          <button class="btn btn-outline-primary btn-sm" formaction="{% url 'generator_export' 'docx' %}">Download Word</button>
+          <button class="btn btn-success btn-sm" formaction="{% url 'generator_save' %}">Save to my documents</button>
+        </div>
+        <div class="form-text">"Save to my documents" runs it through the normal processing pipeline, just like an upload.</div>
+      </div></div>
+    </div>
+    <div class="col-lg-7">
+      <div class="d-flex justify-content-between align-items-center mb-2"><span class="small text-muted">Live preview</span><span id="preview-state" class="small text-muted"></span></div>
+      <iframe id="gen-preview" class="gen-preview" sandbox="" title="Document preview" srcdoc="<p style='font-family:sans-serif;color:#6b7a99;padding:2rem'>Fill the required fields to see the preview.</p>"></iframe>
+    </div>
+  </div>
+</form>
+{% endif %}
+{% endblock %}
+{% block scripts %}{% if template %}<script src="{% static 'js/generator.js' %}"></script>{% endif %}{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load core_extras %}
+{% block title %}Review queue{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3"><h4 class="mb-0">Review queue</h4><a class="btn btn-outline-secondary btn-sm" href="{% url 'review_history' %}">My review history</a></div>
+<div class="card"><div class="table-responsive"><table class="table table-hover align-middle mb-0">
+  <thead><tr><th>Document</th><th>Type</th><th>Confidence</th><th>Why it needs review</th><th>Waiting</th><th></th></tr></thead><tbody>
+  {% for t in page %}
+  <tr>
+    <td>{{ t.version.original_filename }}<div class="small text-muted">by {{ t.version.document.owner.get_username }}</div></td>
+    <td>{{ t.version.document.doc_type.name|default:"Unknown" }}</td>
+    <td>{% if t.version.overall_confidence is not None %}<span class="badge bg-{{ t.version.overall_confidence|conf_color }}">{{ t.version.overall_confidence|num1 }}</span>{% else %}-{% endif %}</td>
+    <td class="small">{% for r in t.friendly %}<div>{{ r }}</div>{% endfor %}</td>
+    <td class="small text-muted">{{ t.created_at|timesince }}</td>
+    <td class="text-end">{% if t.locked_now and t.locked_by != user %}<span class="badge bg-secondary">In review by {{ t.locked_by.get_username }}</span>{% else %}<a class="btn btn-primary btn-sm" href="{% url 'review' t.pk %}">Review</a>{% endif %}</td>
+  </tr>
+  {% empty %}<tr><td colspan="6" class="text-center text-muted py-4">The queue is empty. Nice work.</td></tr>{% endfor %}
+</tbody></table></div></div>
+<div class="mt-3">{% include "partials/pagination.html" %}</div>
+{% endblock %}

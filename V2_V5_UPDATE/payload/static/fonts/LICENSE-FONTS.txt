@@ -1,0 +1,2 @@
+Hind and Patrick Hand are licensed under the SIL Open Font License 1.1 (https://openfontlicense.org).
+They are used only to generate the sample documents in samples/.

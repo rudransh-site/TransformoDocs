@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Upload{% endblock %}
+{% block content %}
+<h4 class="mb-3">Upload a document</h4>
+<div class="row"><div class="col-lg-8">
+  <div id="upload-alert" class="alert d-none"></div>
+  {% if duplicate %}
+  <div class="alert alert-warning">
+    You already uploaded this file on {{ duplicate.existing.created_at|date:"d M Y" }} (status: {{ duplicate.existing.get_status_display }}).
+    <a href="{% url 'document_detail' duplicate.existing.pk %}">Open existing</a>.
+    {% if duplicate.can_retry %}It failed earlier: open it and press Retry.{% endif %}
+  </div>
+  {% endif %}
+  <form id="upload-form" method="post" enctype="multipart/form-data">{% csrf_token %}
+    <div id="dropzone" class="dropzone mb-3">
+      <div class="h5 mb-1">Drag and drop a file here</div>
+      <div class="text-muted">or click to browse</div>
+      <div id="file-info" class="mt-2 fw-semibold"></div>
+      <input id="file-input" name="file" type="file" accept="{{ accept }}" class="d-none">
+    </div>
+    {% if v5_enabled %}
+    <div class="row g-3 mb-3">
+      <div class="col-md-6"><div class="toggle-card">
+        <label class="form-label small fw-semibold mb-1" for="ocr-language">Document language (for scanned files)</label>
+        <select class="form-select form-select-sm" id="ocr-language" name="ocr_language">
+          {% for code, label, ready in ocr_languages %}<option value="{{ code }}" {% if not ready %}disabled{% endif %}>{{ label }}{% if not ready %} (not installed){% endif %}</option>{% endfor %}
+        </select>
+        {% if hindi_missing %}<div class="form-text">Hindi needs a one-time setup: <code>python manage.py download_models</code>.</div>{% endif %}
+      </div></div>
+      <div class="col-md-6"><div class="toggle-card">
+        <div class="form-check form-switch mb-0">
+          <input class="form-check-input" type="checkbox" role="switch" id="handwriting" name="handwriting" value="1">
+          <label class="form-check-label fw-semibold small" for="handwriting">Handwritten document</label>
+        </div>
+        <div class="form-text">Uses handwriting recognition. Results are always sent to a reviewer.</div>
+      </div></div>
+    </div>
+    {% endif %}
+    <button id="upload-btn" class="btn btn-primary" disabled>Upload and process</button>
+    <noscript><p class="text-muted small mt-2">JavaScript is off: choose a file with the button, then submit.</p></noscript>
+  </form>
+</div>
+<div class="col-lg-4"><div class="card"><div class="card-body small">
+  <div class="fw-semibold mb-2">Accepted files</div>
+  <div>Types: {{ extensions }}</div><div>Maximum size: {{ max_mb }} MB</div><div>Maximum pages: {{ max_pages }}</div>
+  <hr class="my-2">
+  Scanned documents are read with OCR automatically. Text-based files are read directly and are usually ready in a few seconds.
+</div></div></div></div>
+{{ upload_cfg|json_script:"upload-config" }}
+{% endblock %}
+{% block scripts %}
+<script src="{% static 'js/upload.js' %}"></script>
+{% endblock %}

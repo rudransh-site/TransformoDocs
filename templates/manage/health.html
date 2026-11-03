@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}System health{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">System health {% if all_ok %}<span class="badge bg-success">All checks passed</span>{% else %}<span class="badge bg-danger">Attention needed</span>{% endif %}</h4>
+  <form method="post" action="{% url 'manage_recover' %}">{% csrf_token %}<button class="btn btn-outline-warning btn-sm">Recover stuck documents</button></form>
+</div>
+<div class="card mb-4"><table class="table align-middle mb-0"><thead><tr><th>Check</th><th>Result</th><th>Details</th></tr></thead><tbody>
+  {% for c in checks %}
+  <tr><td>{{ c.name }}</td><td>{% if c.ok %}<span class="badge bg-success">PASS</span>{% else %}<span class="badge bg-{% if c.critical %}danger{% else %}warning text-dark{% endif %}">FAIL</span>{% endif %}</td>
+  <td class="small">{{ c.detail }}{% if c.fix %}<div class="text-danger">Fix: {{ c.fix }}</div>{% endif %}</td></tr>{% endfor %}
+</tbody></table></div>
+<div class="d-flex justify-content-between align-items-center mb-2"><h5 class="mb-0">Alerts</h5>
+  <form method="post" action="{% url 'manage_alerts_read_all' %}">{% csrf_token %}<button class="btn btn-outline-secondary btn-sm">Mark all read</button></form></div>
+<div class="card"><ul class="list-group list-group-flush">
+  {% for a in alerts %}<li class="list-group-item d-flex justify-content-between align-items-start {% if a.is_read %}text-muted{% endif %}">
+    <div><span class="badge bg-{% if a.severity == 'CRITICAL' %}danger{% elif a.severity == 'WARNING' %}warning text-dark{% else %}info{% endif %}">{{ a.severity }}</span>
+    <strong class="ms-1">{{ a.code }}</strong> {{ a.message }} <span class="small">&times;{{ a.occurrences }} &middot; {{ a.last_seen_at|date:"d M H:i" }}</span></div>
+    {% if not a.is_read %}<form method="post" action="{% url 'manage_alert_read' a.pk %}">{% csrf_token %}<button class="btn btn-sm btn-link">Mark read</button></form>{% endif %}
+  </li>{% empty %}<li class="list-group-item text-muted">No alerts.</li>{% endfor %}
+</ul></div>
+{% endblock %}

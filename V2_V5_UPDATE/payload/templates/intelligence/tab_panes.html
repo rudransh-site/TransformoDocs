@@ -1,0 +1,65 @@
+{% load core_extras %}
+<div class="tab-pane fade" id="t-summary">
+  <div class="card"><div class="card-body">
+    {% if v.summary %}
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <h6 class="mb-0">Automatic summary</h6>
+        {% if insight %}<span class="badge bg-light text-dark border">{{ insight.summary_backend|default:"auto" }}</span>{% endif %}
+      </div>
+      <p style="white-space: pre-line" class="mb-3">{{ v.summary }}</p>
+    {% else %}
+      <p class="text-muted">No summary yet for this document.</p>
+    {% endif %}
+    {% if insight and insight.classification_method == 'AI' %}
+      <div class="alert alert-info py-2 small mb-3">The document type was identified by the AI second-opinion classifier.</div>
+    {% endif %}
+    {% if insight and insight.error %}<div class="alert alert-warning py-2 small">Some insights could not be created: {{ insight.error }}</div>{% endif %}
+    {% if v2_can_modify %}<button class="btn btn-outline-primary btn-sm" id="btn-regenerate" data-url="{% url 'api_insights' doc.pk %}">{% if insight %}Regenerate insights{% else %}Generate insights{% endif %}</button>{% endif %}
+  </div></div>
+</div>
+
+<div class="tab-pane fade" id="t-entities">
+  <div class="card mb-3"><div class="card-body">
+    <h6>Tags</h6>
+    <div id="tag-list" class="d-flex flex-wrap gap-2 mb-2">
+      {% for dt in doc_tags %}
+        <span class="chip chip-tag"><a href="{% url 'search' %}?tag={{ dt.tag.slug }}" class="text-decoration-none">{{ dt.tag.name }}</a>
+        {% if v2_can_modify %}<button type="button" class="chip-x" data-remove-tag="{% url 'api_tag_delete' doc.pk dt.tag.pk %}" title="Remove tag" aria-label="Remove tag {{ dt.tag.name }}">&times;</button>{% endif %}</span>
+      {% empty %}<span class="text-muted small">No tags yet.</span>{% endfor %}
+    </div>
+    {% if v2_can_modify %}
+    <form id="tag-form" class="d-flex gap-2" data-url="{% url 'api_tags' doc.pk %}" style="max-width: 24rem">
+      <input class="form-control form-control-sm" name="name" maxlength="40" placeholder="Add a tag">
+      <button class="btn btn-outline-primary btn-sm">Add</button>
+    </form>{% endif %}
+  </div></div>
+  <div class="card"><div class="card-body">
+    <h6>Entities found {% if insight %}<span class="badge bg-light text-dark border ms-1">{{ insight.entity_backend|default:"auto" }}</span>{% endif %}</h6>
+    {% for g in entity_groups %}
+      <div class="mb-2"><div class="small text-muted mb-1">{{ g.label }}</div>
+        <div class="d-flex flex-wrap gap-2">{% for e in g.items %}<span class="chip chip-{{ g.label|lower }}">{{ e.text }}{% if e.count > 1 %} <small>&times;{{ e.count }}</small>{% endif %}</span>{% endfor %}</div></div>
+    {% empty %}<p class="text-muted mb-0">No entities were found.</p>{% endfor %}
+  </div></div>
+</div>
+
+<div class="tab-pane fade" id="t-translate">
+  <div class="card"><div class="card-body">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+      <h6 class="mb-0">{{ tr.source_name }} &rarr; {{ tr.target_name }}</h6>
+      {% if tr.available %}
+        <button class="btn btn-primary btn-sm" id="btn-translate" data-url="{% url 'api_translate' doc.pk %}" data-target="{{ tr.target }}">{% if tr.cached %}Translate again{% else %}Translate{% endif %}</button>
+      {% endif %}
+    </div>
+    {% if not tr.available %}
+      <div class="alert alert-warning mb-0">The {{ tr.source_name }} &rarr; {{ tr.target_name }} translation pack is not installed on this computer.
+        Run <code>python manage.py download_models</code> once (needs internet), then refresh.</div>
+    {% else %}
+      <div class="small text-muted mb-2">Translates the first part of the document (limit set in Admin settings). It can take a few seconds.</div>
+      <div id="translate-error" class="alert alert-danger d-none"></div>
+      <div class="row g-3">
+        <div class="col-md-6"><div class="small text-muted mb-1">{{ tr.source_name }} (original)</div><pre class="text-pane" id="tr-source">{% if tr.cached %}{{ tr.cached.source_text }}{% else %}{{ v.extracted_text|truncatechars:1500 }}{% endif %}</pre></div>
+        <div class="col-md-6"><div class="small text-muted mb-1">{{ tr.target_name }}</div><pre class="text-pane" id="tr-target">{% if tr.cached %}{{ tr.cached.text }}{% else %}<span class="text-muted">Press Translate to see the {{ tr.target_name }} version here.</span>{% endif %}</pre></div>
+      </div>
+    {% endif %}
+  </div></div>
+</div>

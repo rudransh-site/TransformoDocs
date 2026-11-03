@@ -1,0 +1,7 @@
+# OPTIONAL and heavy (they pull in PyTorch, ~1 GB). The project works without them:
+#   - without sentence-transformers, semantic search/chat use the built-in matcher
+#   - without argostranslate, the Translate tab shows a clear "not installed" message
+# Linux tip: install the CPU build of PyTorch first (much smaller):
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+sentence-transformers>=3.0
+argostranslate>=1.9

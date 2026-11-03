@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Documents{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3"><h4 class="mb-0">Documents</h4>
+  {% if is_plain_user or is_admin %}<a class="btn btn-primary btn-sm" href="{% url 'upload' %}">Upload</a>{% endif %}</div>
+<form class="row g-2 mb-3" method="get">
+  <div class="col-md-3"><select name="status" class="form-select form-select-sm"><option value="">All statuses</option>{% for v, l in statuses %}<option value="{{ v }}" {% if v == f_status %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+  <div class="col-md-3"><select name="type" class="form-select form-select-sm"><option value="">All types</option>{% for t in types %}<option value="{{ t.code }}" {% if t.code == f_type %}selected{% endif %}>{{ t.name }}</option>{% endfor %}</select></div>
+  <div class="col-md-3 d-flex align-items-center"><div class="form-check"><input class="form-check-input" type="checkbox" name="archived" value="1" id="arch" {% if f_archived %}checked{% endif %}><label class="form-check-label small" for="arch">Include archived</label></div></div>
+  <div class="col-md-3"><button class="btn btn-outline-secondary btn-sm">Filter</button> <a class="btn btn-link btn-sm" href="{% url 'document_list' %}">Reset</a></div>
+</form>
+<div class="card">{% include "partials/doc_table.html" with docs=page show_owner=True %}</div>
+<div class="mt-3">{% include "partials/pagination.html" %}</div>
+{% endblock %}

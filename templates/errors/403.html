@@ -1,0 +1,3 @@
+{% extends "base.html" %}
+{% block title %}Not allowed{% endblock %}
+{% block content %}<div class="text-center py-5"><h1 class="display-4">403</h1><p class="lead">{{ message|default:"You do not have permission to view this page." }}</p><a class="btn btn-primary" href="{% url 'home' %}">Go to dashboard</a></div>{% endblock %}

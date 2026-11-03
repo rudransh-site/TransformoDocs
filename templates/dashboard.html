@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load core_extras %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h4 class="mb-3">Dashboard</h4>
+
+{% if is_admin %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3"><div class="card stat-card"><div class="card-body"><div class="text-muted small">Documents</div><div class="display-6">{{ stats.total_documents }}</div><div class="small text-muted">{{ stats.documents_today }} today</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="card stat-card"><div class="card-body"><div class="text-muted small">Pending reviews</div><div class="display-6">{{ stats.pending_reviews }}</div><a class="small" href="{% url 'review_queue' %}">Open queue</a></div></div></div>
+  <div class="col-6 col-md-3"><div class="card stat-card"><div class="card-body"><div class="text-muted small">Avg confidence</div><div class="display-6">{{ stats.avg_confidence|num1 }}</div><div class="small text-muted">avg {{ stats.avg_processing_seconds|num1 }} s / document</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="card stat-card"><div class="card-body"><div class="text-muted small">Unread alerts</div><div class="display-6 {% if stats.unread_alerts %}text-danger{% endif %}">{{ stats.unread_alerts }}</div><a class="small" href="{% url 'manage_health' %}">System health</a></div></div></div>
+</div>
+{% if alerts %}
+<div class="card mb-4"><div class="card-header">Latest alerts</div><ul class="list-group list-group-flush">
+  {% for a in alerts %}<li class="list-group-item"><span class="badge bg-{% if a.severity == 'CRITICAL' %}danger{% else %}warning text-dark{% endif %}">{{ a.severity }}</span> {{ a.message }} <span class="text-muted small">&times;{{ a.occurrences }}</span></li>{% endfor %}
+</ul></div>
+{% endif %}
+<div class="row g-3">
+  <div class="col-md-7"><div class="card"><div class="card-header">Recent documents</div>
+    {% include "partials/doc_table.html" with docs=recent_docs show_owner=True %}</div></div>
+  <div class="col-md-5"><div class="card"><div class="card-header d-flex justify-content-between">Recent activity <a class="small" href="{% url 'manage_audit' %}">Audit log</a></div>
+    <ul class="list-group list-group-flush small">
+      {% for a in recent_audit %}<li class="list-group-item">{{ a.created_at|date:"d M H:i" }} &middot; <strong>{{ a.username|default:"system" }}</strong> {{ a.get_action_display }}</li>{% empty %}<li class="list-group-item text-muted">Nothing yet.</li>{% endfor %}
+    </ul></div></div>
+</div>
+
+{% elif is_reviewer %}
+<div class="row g-3 mb-4">
+  <div class="col-md-4"><div class="card stat-card"><div class="card-body"><div class="text-muted small">Waiting for review</div><div class="display-6">{{ pending_count }}</div></div></div></div>
+  <div class="col-md-4"><div class="card stat-card"><div class="card-body"><div class="text-muted small">Oldest pending</div>
+    {% if oldest %}<div class="h5 mb-1">{{ oldest.created_at|timesince }} ago</div><a class="small" href="{% url 'review' oldest.pk %}">Review it</a>{% else %}<div class="h5">Nothing waiting</div>{% endif %}</div></div></div>
+  <div class="col-md-4 d-flex align-items-center"><a class="btn btn-primary btn-lg w-100" href="{% url 'review_queue' %}">Open review queue</a></div>
+</div>
+<div class="card"><div class="card-header d-flex justify-content-between">My recent reviews <a class="small" href="{% url 'review_history' %}">All</a></div>
+  <ul class="list-group list-group-flush">
+    {% for t in my_recent %}<li class="list-group-item d-flex justify-content-between"><span><a href="{% url 'document_detail' t.version.document.pk %}">{{ t.version.original_filename }}</a></span><span><span class="badge bg-{% if t.decision == 'REJECTED' %}danger{% else %}success{% endif %}">{{ t.get_decision_display }}</span> <span class="text-muted small">{{ t.decided_at|date:"d M H:i" }}</span></span></li>{% empty %}<li class="list-group-item text-muted">No reviews yet.</li>{% endfor %}
+  </ul></div>
+
+{% else %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3"><div class="card stat-card"><div class="card-body"><div class="text-muted small">My documents</div><div class="display-6">{{ counts.total }}</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="card stat-card"><div class="card-body"><div class="text-muted small">Verified</div><div class="display-6 text-success">{{ counts.verified }}</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="card stat-card"><div class="card-body"><div class="text-muted small">Under review</div><div class="display-6 text-warning">{{ counts.review }}</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="card stat-card"><div class="card-body"><div class="text-muted small">Rejected / failed</div><div class="display-6 text-danger">{{ counts.problem }}</div></div></div></div>
+</div>
+<a class="btn btn-primary mb-3" href="{% url 'upload' %}">Upload a document</a>
+<div class="card"><div class="card-header d-flex justify-content-between">Recent documents <a class="small" href="{% url 'document_list' %}">All documents</a></div>
+  {% include "partials/doc_table.html" with docs=recent_docs %}</div>
+{% endif %}
+{% endblock %}

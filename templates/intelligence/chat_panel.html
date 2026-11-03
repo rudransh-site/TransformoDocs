@@ -1,0 +1,27 @@
+{% if show_chat %}
+<button id="chat-fab" class="chat-fab" type="button" aria-label="Open document assistant" title="Ask about this document">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+</button>
+<aside id="chat-panel" class="chat-panel" aria-hidden="true" aria-label="Document assistant">
+  <header class="chat-head">
+    <div><div class="chat-title">Document assistant</div><div class="chat-sub">{{ doc.display_name|truncatechars:34 }}</div></div>
+    <div class="chat-actions">
+      {% if v2_can_modify %}<button type="button" id="chat-clear" class="chat-icon" title="Clear conversation" aria-label="Clear conversation">&#8634;</button>{% endif %}
+      <button type="button" id="chat-close" class="chat-icon" title="Close" aria-label="Close">&times;</button>
+    </div>
+  </header>
+  <div id="chat-messages" class="chat-messages">
+    <div class="msg bot"><div class="bubble">Hi! Ask me anything about this document. I answer from its extracted text and fields.</div></div>
+    {% for m in chat_history %}
+      <div class="msg user"><div class="bubble">{{ m.question }}</div></div>
+      <div class="msg bot"><div class="bubble">{{ m.answer }}</div></div>
+    {% endfor %}
+  </div>
+  <div class="chat-suggest" id="chat-suggest">{% for s in chat_suggestions %}<button type="button" class="chip chip-suggest">{{ s }}</button>{% endfor %}</div>
+  <form id="chat-form" class="chat-form" autocomplete="off">
+    <input id="chat-input" maxlength="500" placeholder="Ask a question..." aria-label="Your question">
+    <button class="chat-send" aria-label="Send">&#10148;</button>
+  </form>
+</aside>
+<script id="chat-config" type="application/json">{"url": "{% url 'api_chat' doc.pk %}", "csrf": "{{ csrf_token }}", "loginUrl": "{% url 'login' %}"}</script>
+{% endif %}

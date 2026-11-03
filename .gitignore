@@ -1,0 +1,32 @@
+.env
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.sqlite3
+media/
+logs/
+staticfiles/
+.idea/
+.vscode/
+
+# Python
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Secrets
+.env
+.env.*
+
+# Database and user data
+*.sqlite3
+db.sqlite3
+media/
+logs/
+
+# Generated files and backups
+staticfiles/
+_backup_before_v2_v5/
+

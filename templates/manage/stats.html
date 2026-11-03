@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load core_extras %}
+{% block title %}System stats{% endblock %}
+{% block content %}
+<h4 class="mb-3">System stats</h4>
+<div class="row g-3 mb-3">
+  <div class="col-6 col-md-3"><div class="card stat-card"><div class="card-body"><div class="text-muted small">Total documents</div><div class="display-6">{{ s.total_documents }}</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="card stat-card"><div class="card-body"><div class="text-muted small">Avg confidence</div><div class="display-6">{{ s.avg_confidence|num1 }}</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="card stat-card"><div class="card-body"><div class="text-muted small">Avg processing (s)</div><div class="display-6">{{ s.avg_processing_seconds|num1 }}</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="card stat-card"><div class="card-body"><div class="text-muted small">Avg review time (min)</div><div class="display-6">{{ s.avg_review_minutes|num1 }}</div><div class="small text-muted">{{ s.reviews_completed }} completed, {{ s.pending_reviews }} pending</div></div></div></div>
+</div>
+<div class="row g-3">
+  <div class="col-md-4"><div class="card"><div class="card-header">By status</div><table class="table table-sm mb-0"><tbody>{% for k, n in s.by_status.items %}<tr><td><span class="badge bg-{{ k|status_color }}">{{ k }}</span></td><td class="text-end">{{ n }}</td></tr>{% empty %}<tr><td class="text-muted">No data</td></tr>{% endfor %}</tbody></table></div></div>
+  <div class="col-md-4"><div class="card"><div class="card-header">By document type</div><table class="table table-sm mb-0"><tbody>{% for k, n in s.by_type.items %}<tr><td>{{ k }}</td><td class="text-end">{{ n }}</td></tr>{% empty %}<tr><td class="text-muted">No data</td></tr>{% endfor %}</tbody></table></div></div>
+  <div class="col-md-4"><div class="card"><div class="card-header">Native text vs OCR</div><table class="table table-sm mb-0"><tbody>{% for k, n in s.by_method.items %}<tr><td>{{ k }}</td><td class="text-end">{{ n }}</td></tr>{% empty %}<tr><td class="text-muted">No data</td></tr>{% endfor %}</tbody></table></div></div>
+  <div class="col-md-4"><div class="card"><div class="card-header">Accounts by role</div><table class="table table-sm mb-0"><tbody>{% for k, n in s.users_by_role.items %}<tr><td>{{ k }}</td><td class="text-end">{{ n }}</td></tr>{% endfor %}</tbody></table></div></div>
+</div>
+{% endblock %}

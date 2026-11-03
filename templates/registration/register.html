@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-md-6">
+  <div class="card"><div class="card-body p-4">
+    <h4>Create an account</h4>
+    <form method="post" novalidate>{% csrf_token %}
+      {% for f in form %}
+      <div class="mb-3"><label class="form-label">{{ f.label }}</label>{{ f }}
+        {% for e in f.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+        {% if f.help_text %}<div class="form-text">{{ f.help_text|safe }}</div>{% endif %}</div>
+      {% endfor %}
+      <button class="btn btn-primary w-100">Register</button>
+    </form>
+    <div class="text-center small mt-3">Already registered? <a href="{% url 'login' %}">Log in</a></div>
+  </div></div>
+</div></div>
+{% endblock %}
