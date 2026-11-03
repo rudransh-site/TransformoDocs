@@ -1,9 +1,11 @@
 ﻿import os
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
+from core.models import Profile
+from core.constants import Role
 
 class Command(BaseCommand):
-    help = "Create or update an admin user using environment variables"
+    help = "Create or update the admin user"
 
     def handle(self, *args, **options):
         username = os.getenv("BOOTSTRAP_ADMIN_USERNAME")
@@ -15,6 +17,7 @@ class Command(BaseCommand):
             return
 
         User = get_user_model()
+
         user, created = User.objects.get_or_create(
             **{User.USERNAME_FIELD: username},
             defaults={"email": email}
@@ -25,4 +28,11 @@ class Command(BaseCommand):
         user.set_password(password)
         user.save()
 
-        self.stdout.write(self.style.SUCCESS("Admin account created or updated."))
+        Profile.objects.update_or_create(
+            user=user,
+            defaults={"role": Role.ADMIN}
+        )
+
+        self.stdout.write(
+            self.style.SUCCESS("Admin account and ADMIN role configured.")
+        )
